@@ -1,7 +1,16 @@
 import numpy as np
 from backtracking import armijo_backtracking
+from enum import Enum
 
-def quasi_newton(x0, f, grad_f, tol=1e-6, max_iter=10000, verbose=None):
+class QuasiNewtonMethod(Enum):
+	BFGS = 1
+	DFP = 2
+
+def quasi_newton(x0, f, grad_f, 
+				 method: QuasiNewtonMethod=QuasiNewtonMethod.BFGS, 
+				 tol=1e-6, 
+				 max_iter=10000, 
+				 verbose=None):
 	print(f"Running Quasi-Newton with grad-norm-tolerance {tol} and max-iterations {max_iter}")
 	xk = x0.copy()
 	n = len(xk)
@@ -27,7 +36,10 @@ def quasi_newton(x0, f, grad_f, tol=1e-6, max_iter=10000, verbose=None):
 		s = x_new - xk              # compute s (difference of new and previous x-value)
 		y = grad_new - gradk        # compute y (differnece of new and previous gradient)
 
-		H = bfgs_update(H, s, y, verbose=verbose is not None and k % verbose == 0)    # compute new hessian approximation
+		if method == QuasiNewtonMethod.BFGS:
+			H = bfgs_update(H, s, y, verbose=verbose is not None and k % verbose == 0)    # compute new hessian approximation
+		elif method == QuasiNewtonMethod.DFP:
+			H = dfp_hessian_update(H, s, y, verbose=verbose is not None and k % verbose == 0)    # compute new hessian approximation
 
 		xk = x_new
 		if verbose is not None and k % verbose == 0:
@@ -58,3 +70,26 @@ def bfgs_update(Hk, sk, yk, verbose=False):
 
 	Hk_new = (I - rho * outer_sy) @ Hk @ (I - rho * outer_ys) + rho * outer_ss
 	return Hk_new
+
+def dfp_hessian_update(Hk, sk, yk, verbose=False):
+	sk_dot_yk = np.dot(sk, yk)
+
+	if sk_dot_yk <= 1e-10:
+		if verbose:
+			print("Skipping DFP update: curvature condition violated.")
+		return Hk
+	
+	Hk_yk = np.dot(Hk, yk)
+	yk_Hk = np.dot(yk, Hk_yk)
+
+	term1 = np.outer(sk, sk) / sk_dot_yk
+
+	# Avoid division by zero in the second term
+	if yk_Hk > 1e-12:
+		term2 = -np.outer(Hk_yk, Hk_yk) / yk_Hk
+		Hk = Hk + term1 + term2
+	else: # Fallback to simpler rank-1 update if denominator is zero
+		Hk = Hk + term1
+
+	return Hk
+	

@@ -1,6 +1,6 @@
 from utils import initialize_starting_points, save_plots, create_latex_table
 from functions import f, grad, l, a, b
-from bfgs import quasi_newton
+from quasiNewton import quasi_newton, QuasiNewtonMethod
 import numpy as np
 import time
 
@@ -43,7 +43,12 @@ def start_runs(x0_list, optimizer, f, target_solution, method_name):
 	return results
 
 if __name__ == "__main__":
-	optimizer = lambda x: quasi_newton(x, f=f ,grad_f=grad, tol=1e-6, max_iter=10000, verbose=None)
+	optimizer = lambda x: quasi_newton(x, f=f ,grad_f=grad, 
+									 method=QuasiNewtonMethod.BFGS,
+									 tol=1e-6, 
+									 max_iter=10000, 
+									 verbose=None)
+	
 	starts, target_solution = initialize_starting_points(l)
 	
 	results = start_runs(starts, optimizer=optimizer, f=f, target_solution=target_solution, method_name="BFGS")
