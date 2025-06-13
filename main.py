@@ -3,6 +3,8 @@ from functions import f, grad, l, a, b
 from quasiNewton import quasi_newton, QuasiNewtonMethod
 import numpy as np
 import time
+import pandas as pd
+from tabulate import tabulate
 
 def start_runs(x0_list, optimizer, f, target_solution, method_name):
 	results = []
@@ -27,6 +29,47 @@ def start_runs(x0_list, optimizer, f, target_solution, method_name):
 		print(f"Distance x_bar to x*: {distance_to_target_solution}")
 		print(f"Final gradient norm: {grad_norm}")
 
+		#########################
+		# Calculate l_k and q_k #
+		#########################	
+		# Compute norms to x_bar
+		norms = [np.linalg.norm(x - x_solution) for x in x_k_list]
+
+		# Get last 5 indices
+		k_vals = list(range(len(x_k_list) - 5, len(x_k_list)))
+
+		data = {
+			"Iter k": k_vals,
+			"||x_k - x̄||": [norms[k] for k in k_vals],
+			"l_k": [],
+			"q_k": []
+		}
+
+		last_k = 5
+		for k in k_vals:
+			if k != k_vals[-1]:
+				nominator = np.linalg.norm(x_k_list[k+1] - x_solution)
+				denominator = np.linalg.norm(x_k_list[k] - x_solution)
+				
+				l_k = nominator / denominator if denominator != 0 else np.nan
+				q_k = nominator / denominator**2 if denominator != 0 else np.nan
+
+				data["l_k"].append(l_k)
+				data["q_k"].append(q_k)
+			else:
+				data["l_k"].append("(last step)")
+				data["q_k"].append("(last step)")
+			
+		# Format the DataFrame
+		df = pd.DataFrame(data)
+		df["||x_k - x̄||"] = df["||x_k - x̄||"].map("{:.6e}".format)
+		df.loc[df["l_k"] != "(last step)", "l_k"] = df.loc[df["l_k"] != "(last step)", "l_k"].map("{:.3e}".format)
+		df.loc[df["q_k"] != "(last step)", "q_k"] = df.loc[df["q_k"] != "(last step)", "q_k"].map("{:.3e}".format)
+
+		print(tabulate(df, headers='keys', tablefmt='psql'))
+
+
+		# store everything in the results
 		results.append({
 			"run": i,
 			"method_name": method_name,
@@ -35,7 +78,10 @@ def start_runs(x0_list, optimizer, f, target_solution, method_name):
 			"grad_norm": grad_norm,
 			"x_k_list": x_k_list,
 			"time": toc-tic,
-			"distance_to_target_solution": distance_to_target_solution
+			"distance_to_target_solution": distance_to_target_solution,
+			"x0": x0,
+			"l_k": data["l_k"][-2],
+			"q_k": data["q_k"][-2]
 		})
 
 	save_plots(results, method_name)

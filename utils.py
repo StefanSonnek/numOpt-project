@@ -53,7 +53,7 @@ def initialize_starting_points(l):
 
 	x0_6 = smart_init(l)
 
-	starts = [x0_1, x0_2, x0_3, x0_4, x0_5, x0_6]
+	starts = [x0_1, x0_2, x0_3, x0_4, x0_5]
 	
 	x_target = np.array([
 		-3.47556557e+01,  2.55102404e-01, -1.97634873e+00,
@@ -71,7 +71,7 @@ def save_plots(results, method_name, save_path="plots"):
 	os.makedirs(save_path, exist_ok=True)
 
 	n_results = len(results)
-	max_cols = 3
+	max_cols = 2
 
 	# Calculate optimal subplot layout
 	if n_results == 1:
@@ -95,14 +95,19 @@ def save_plots(results, method_name, save_path="plots"):
 
 	for i, result in enumerate(results):
 		ax = axs[i]
-		ax.plot(a, phi_vectorized(result["x_solution"], a), label="approximation of sin")
-		ax.plot(a, b, alpha=0.8, label="sin")
+		ax.plot(a, phi_vectorized(result["x0"], a), label=r"initial $\phi(x_0; t)$", linestyle="--", color="red", alpha=0.5)
+		ax.plot(a, b, alpha=0.8, label="sin", linestyle='--', color='black')
+		ax.plot(a, b, alpha=0.5, label=r"$\sin(a_j)$", marker="o", color="black")
+		ax.plot(a, phi_vectorized(result["x_solution"], a), label=r"$\phi(x; t)$", color="blue")
+
 
 		ax.grid(True, alpha=0.3)
 		ax.set_xlabel("x")
 		ax.set_ylabel("y")
 
 		title_parts = []
+		if "run" in result:
+			title_parts.append(f"Run {result['run']}")
 		if "iterations" in result:
 			title_parts.append(f"Iters: {result['iterations']}")
 		if "grad_norm" in result:
@@ -157,10 +162,14 @@ def create_latex_table(results):
 		time = result['time']
 		distance_to_target_solution = to_latex_scientific(result['distance_to_target_solution'], precision=4)
 		grad_norm = to_latex_scientific(result['grad_norm'], precision=4)
+		l_k = to_latex_scientific(result['l_k'], precision=4)
+		q_k = to_latex_scientific(result['q_k'], precision=4)
 
-		table.append(f"{run}& {iterations} & {time:.2f} & {distance_to_target_solution} & {grad_norm} & - & - & - & - \\\\")
+		table.append(f"{run}& {iterations} & {time:.2f} & {distance_to_target_solution} & {grad_norm} & {l_k} & {q_k} & - & - \\\\")
 	table.append("\\end{tabular}")
 	table.append("\\caption{Caption}")
 	table.append("\\end{table}")
+
 	
+	print("\n"*3 + "------GENERATING LATEX TABLE------" + "\n"*2)
 	print("\n".join(table))
