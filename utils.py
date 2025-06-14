@@ -13,6 +13,20 @@ def smart_init(l):
 		x0[3*i + 2] = 1                 # σ_i (positive)
 	return x0
 
+def initliazie_random_starting_points(n, l):
+	starts = np.random.random((n, 3*l))
+
+	# set alphas to values from -10 to 10
+	starts[:, ::3] *= np.random.randint(-10, 10)
+
+	x_target = np.array([
+		-3.47556557e+01,  2.55102404e-01, -1.97634873e+00,
+		-4.35404002e+00, -2.09600472e+00,  1.38497184e+00,
+		7.59309325e+02,  2.30507094e+00,  2.49178735e+00,
+		-7.38736857e+02,  2.39822783e+00, -2.45891117e+00
+	])
+
+	return starts, x_target
 
 def initialize_starting_points(l):
 	x0_1 = np.array([
@@ -102,8 +116,8 @@ def save_plots(results, method_name, save_path="plots"):
 
 
 		ax.grid(True, alpha=0.3)
-		ax.set_xlabel("x")
-		ax.set_ylabel("y")
+		ax.set_ylabel(r"sin(t) / $\phi(x;t)$")
+		ax.set_xlabel("t")
 
 		title_parts = []
 		if "run" in result:
@@ -151,7 +165,8 @@ def create_latex_table(results):
 	but with empty values represented by dashes.
 	"""
 	table = []
-	table.append("\\begin{table}[ht]")
+	table.append("\\begin{table}[H]")
+	table.append("\\small")
 	table.append("\\begin{tabular}{ccccccccc}")
 	table.append("\\hline")
 	table.append("Run & Iters & Time (s) & $\\|\\tilde{x} - x^*\\|_2$ & $\|\\nabla f\\|$ & $\\ell_k$ & $q_k$ & Stopping Crit. & Convergence \\\\")
@@ -160,10 +175,10 @@ def create_latex_table(results):
 		run = result['run']
 		iterations = result['iterations']
 		time = result['time']
-		distance_to_target_solution = to_latex_scientific(result['distance_to_target_solution'], precision=4)
-		grad_norm = to_latex_scientific(result['grad_norm'], precision=4)
-		l_k = to_latex_scientific(result['l_k'], precision=4)
-		q_k = to_latex_scientific(result['q_k'], precision=4)
+		distance_to_target_solution = to_latex_scientific(result['distance_to_target_solution'], precision=2)
+		grad_norm = to_latex_scientific(result['grad_norm'], precision=2)
+		l_k = to_latex_scientific(result['l_k'], precision=2)
+		q_k = to_latex_scientific(result['q_k'], precision=2)
 
 		table.append(f"{run}& {iterations} & {time:.2f} & {distance_to_target_solution} & {grad_norm} & {l_k} & {q_k} & - & - \\\\")
 	table.append("\\end{tabular}")

@@ -1,4 +1,4 @@
-from utils import initialize_starting_points, save_plots, create_latex_table
+from utils import initialize_starting_points, save_plots, create_latex_table, initliazie_random_starting_points
 from functions import f, grad, l, a, b
 from quasiNewton import quasi_newton, QuasiNewtonMethod
 import numpy as np
@@ -36,7 +36,7 @@ def start_runs(x0_list, optimizer, f, target_solution, method_name):
 		norms = [np.linalg.norm(x - x_solution) for x in x_k_list]
 
 		# Get last 5 indices
-		k_vals = list(range(len(x_k_list) - 5, len(x_k_list)))
+		k_vals = list(range(len(x_k_list) - 10, len(x_k_list)))
 
 		data = {
 			"Iter k": k_vals,
@@ -84,7 +84,7 @@ def start_runs(x0_list, optimizer, f, target_solution, method_name):
 			"q_k": data["q_k"][-2]
 		})
 
-	save_plots(results, method_name)
+	
 
 	return results
 
@@ -96,6 +96,9 @@ if __name__ == "__main__":
 									 verbose=None)
 	
 	starts, target_solution = initialize_starting_points(l)
+	# starts, target_solution = initliazie_random_starting_points(10, l)
 	
-	results = start_runs(starts, optimizer=optimizer, f=f, target_solution=target_solution, method_name="BFGS")
+	method_name = "BFGS"
+	results = start_runs(starts, optimizer=optimizer, f=f, target_solution=target_solution, method_name=method_name)
+	save_plots(results, method_name=method_name)
 	create_latex_table(results)
